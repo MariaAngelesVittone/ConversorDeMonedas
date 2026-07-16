@@ -4,6 +4,7 @@ using Data;
 using Data.Interface;
 using Data.Entities;
 using Data.Enums;
+using Service.Interface;
 
 namespace Service
 {

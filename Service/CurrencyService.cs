@@ -22,23 +22,15 @@ namespace Service
             _userService = userService;
         }
 
-        private readonly Dictionary<string, decimal> _conversionIndexes = new(StringComparer.OrdinalIgnoreCase)
-        {
-            { "ARS", 0.002m },
-            { "EUR", 1.09m },
-            { "KC" , 0.043m },
-            { "USD" , 1.00m }
-        };
-
         public List<Currency>? GetCurrency()
         {
-            var lista = _currencyRepo.GetCurrency();
+            var lista = _currencyRepo.GetAll();
             return lista != null && lista.Any() ? lista : null;
         }
 
         public Currency? CreateCurrency(CreateCurrencyDto dto)
         {
-            if (_currencyRepo.VerificateCodeCurrency(dto.Codigo) is not null)
+            if (_currencyRepo.GetByCode(dto.Codigo) is not null)
                 return null;
 
             var simbolo = dto.Leyenda switch
@@ -59,12 +51,14 @@ namespace Service
                 State = CurrencyState.Active
             };
 
-            return _currencyRepo.CreateCurrency(currency);
+            var created = _currencyRepo.Create(currency);
+            _currencyRepo.SaveChanges();
+            return created;
         }
 
         public Currency? ModificateCurrency(int codeCurrency, ModificateCurrencyDto dto)
         {
-            var currency = _currencyRepo.VerificateCodeCurrency(codeCurrency);
+            var currency = _currencyRepo.GetByCode(codeCurrency);
             if (currency is null) return null;
 
             currency.Leyend = dto.Leyenda;
@@ -79,12 +73,16 @@ namespace Service
                 _ => currency.Symbol
             };
 
-            return _currencyRepo.ModificateCurrency(currency);
+            var updated = _currencyRepo.Update(currency);
+            _currencyRepo.SaveChanges();
+            return updated;
         }
 
         public Currency? DeleteCurrency(int codeCurrency)
         {
-            return _currencyRepo.DeleteCurrency(codeCurrency);
+            var deleted = _currencyRepo.Delete(codeCurrency);
+            if (deleted is not null) _currencyRepo.SaveChanges();
+            return deleted;
         }
 
         // Soporta tanto "sub" como ClaimTypes.NameIdentifier / "nameid"
@@ -111,13 +109,16 @@ namespace Service
 
         public decimal ConvertCurrency(CurrencyConversionDto dto)
         {
-            if (!_conversionIndexes.TryGetValue(dto.FromCurrency, out var fromIndex))
-                throw new ArgumentException("Moneda origen desconocida.");
-            if (!_conversionIndexes.TryGetValue(dto.ToCurrency, out var toIndex))
-                throw new ArgumentException("Moneda destino desconocida.");
+            var from = _currencyRepo.GetByCode(dto.FromCurrencyCode)
+                ?? throw new ArgumentException("Moneda origen desconocida.");
+            var to = _currencyRepo.GetByCode(dto.ToCurrencyCode)
+                ?? throw new ArgumentException("Moneda destino desconocida.");
 
-            if (fromIndex == toIndex) return dto.Amount;
-            return dto.Amount * (toIndex / fromIndex);
+            if (to.ConversionRate <= 0)
+                throw new ArgumentException("Índice de convertibilidad inválido para la moneda destino.");
+
+            if (from.Code == to.Code) return dto.Amount;
+            return dto.Amount * from.ConversionRate / to.ConversionRate;
         }
     }
 }

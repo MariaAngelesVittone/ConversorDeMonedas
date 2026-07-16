@@ -6,5 +6,6 @@ namespace Data.Interface
     {
         Subscription? GetByUserId(int userId);
         void Update(Subscription subscription);
+        void SaveChanges();
     }
 }

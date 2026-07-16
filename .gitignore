@@ -361,3 +361,10 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Frontend repo lives alongside the backend but is its own git repository
+/CurrencyConverterFront/
+
+# SQLite journal files
+*.db-shm
+*.db-wal
