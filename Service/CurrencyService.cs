@@ -126,6 +126,8 @@ namespace Service
                 UserId = userId,
                 FromCurrencyCode = dto.FromCurrencyCode,
                 ToCurrencyCode = dto.ToCurrencyCode,
+                FromCurrencyLeyend = from.Leyend,
+                ToCurrencyLeyend = to.Leyend,
                 Amount = dto.Amount,
                 Result = result,
                 Date = DateTime.UtcNow

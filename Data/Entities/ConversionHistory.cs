@@ -14,6 +14,12 @@ namespace Data.Entities
 
         public int ToCurrencyCode { get; set; }
 
+        // Copia de la leyenda al momento de convertir, para que el historial
+        // siga siendo legible aunque la moneda se borre despues.
+        public string FromCurrencyLeyend { get; set; } = string.Empty;
+
+        public string ToCurrencyLeyend { get; set; } = string.Empty;
+
         public decimal Amount { get; set; }
 
         public decimal Result { get; set; }
