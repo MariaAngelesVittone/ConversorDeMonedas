@@ -94,7 +94,8 @@ namespace Service
                 Email = user.Email,
                 SubscriptionType = user.SubscriptionType,
                 ConversionLimit = user.ConversionLimit,
-                IsAdmin = user.IsAdmin
+                IsAdmin = user.IsAdmin,
+                CanConvert = CheckConvert(userId)
             };
         }
 

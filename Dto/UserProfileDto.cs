@@ -10,5 +10,6 @@ namespace Dto
         public SubscriptionType SubscriptionType { get; set; }
         public int ConversionLimit { get; set; }
         public bool IsAdmin { get; set; }
+        public bool CanConvert { get; set; }
     }
 }
