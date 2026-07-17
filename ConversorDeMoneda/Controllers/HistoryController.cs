@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Security.Claims;
 using Data.Interface;
@@ -28,6 +29,14 @@ namespace ConversorDeMoneda.Controllers
             }
 
             var history = _historyRepository.GetByUserId(userId);
+
+            // Sqlite no conserva el DateTimeKind al leer; lo forzamos a Utc
+            // para que el JSON viaje con la "Z" y el frontend lo convierta bien.
+            foreach (var item in history)
+            {
+                item.Date = DateTime.SpecifyKind(item.Date, DateTimeKind.Utc);
+            }
+
             return Ok(history);
         }
     }
