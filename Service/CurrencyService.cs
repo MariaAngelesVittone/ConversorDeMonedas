@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using Data.Interface;
 using Data.Entities;
 using Data.Enums;
@@ -85,28 +83,6 @@ namespace Service
             var deleted = _currencyRepo.Delete(codeCurrency);
             if (deleted is not null) _currencyRepo.SaveChanges();
             return deleted;
-        }
-
-        // Soporta tanto "sub" como ClaimTypes.NameIdentifier / "nameid"
-        public int GetUserIdFromToken(string token)
-        {
-            var handler = new JwtSecurityTokenHandler();
-            if (string.IsNullOrEmpty(token) || !handler.CanReadToken(token)) return 0;
-
-            try
-            {
-                var jwt = handler.ReadJwtToken(token);
-                var userIdClaim = jwt.Claims.FirstOrDefault(c =>
-                    c.Type == "sub" ||
-                    c.Type == ClaimTypes.NameIdentifier ||
-                    c.Type == "nameid")?.Value;
-
-                return int.TryParse(userIdClaim, out var userId) ? userId : 0;
-            }
-            catch
-            {
-                return 0;
-            }
         }
 
         public decimal ConvertCurrency(CurrencyConversionDto dto, int userId)

@@ -1,8 +1,10 @@
 using Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Swashbuckle.AspNetCore.SwaggerGen;
 using Data.Interface;
 using Data.Repository;
 using Data.Entities;
@@ -42,16 +44,7 @@ builder.Services.AddSwaggerGen(options =>
         In = ParameterLocation.Header,
         Description = "Pegar el token con el prefijo Bearer, ej: Bearer eyJhbGciOi..."
     });
-    options.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
-            },
-            Array.Empty<string>()
-        }
-    });
+    options.OperationFilter<AuthorizeOperationFilter>();
 });
 
 builder.Services.AddDbContext<CurrencyConverterContext>(dbContextOptions => dbContextOptions.UseSqlite(
@@ -138,3 +131,29 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+class AuthorizeOperationFilter : IOperationFilter
+{
+    public void Apply(OpenApiOperation operation, OperationFilterContext context)
+    {
+        var hasAuthorize = context.MethodInfo.DeclaringType is not null &&
+            (context.MethodInfo.DeclaringType.GetCustomAttributes(true).OfType<AuthorizeAttribute>().Any()
+                || context.MethodInfo.GetCustomAttributes(true).OfType<AuthorizeAttribute>().Any());
+
+        if (!hasAuthorize) return;
+
+        operation.Security = new List<OpenApiSecurityRequirement>
+        {
+            new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+                    },
+                    Array.Empty<string>()
+                }
+            }
+        };
+    }
+}
