@@ -15,10 +15,12 @@ namespace Service
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
+        private readonly IConversionHistoryRepository _historyRepository;
 
-        public UserService(IUserRepository userRepository)
+        public UserService(IUserRepository userRepository, IConversionHistoryRepository historyRepository)
         {
             _userRepository = userRepository;
+            _historyRepository = historyRepository;
         }
 
         public UserResponse UserRegistered(UserRegisterDTO userRegisterDTO)
@@ -66,17 +68,17 @@ namespace Service
             var user = _userRepository.GetUserById(userId);
             if (user is null) return false;
 
-            return user.ConversionUsed < user.ConversionLimit;
+            if (user.SubscriptionType == SubscriptionType.Pro) return true;
+
+            var since = DateTime.UtcNow.AddDays(-30);
+            var usedThisMonth = _historyRepository.CountSince(userId, since);
+            return usedThisMonth < user.ConversionLimit;
         }
 
-        public void RegisterConversion(int userId)
+        public bool IsAdmin(int userId)
         {
             var user = _userRepository.GetUserById(userId);
-            if (user is null) return;
-
-            user.ConversionUsed++;
-            _userRepository.Update(user);
-            _userRepository.SaveChanges();
+            return user?.IsAdmin ?? false;
         }
     }
 }

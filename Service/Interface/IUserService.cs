@@ -10,6 +10,6 @@ namespace Service.Interface
         UserResponse UserRegistered(UserRegisterDTO userRegisterDTO);
         User? LoginUser(string username, string password);
         bool CheckConvert(int userId);
-        void RegisterConversion(int userId);
+        bool IsAdmin(int userId);
     }
 }

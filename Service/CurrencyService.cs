@@ -15,11 +15,13 @@ namespace Service
     {
         private readonly ICurrencyRepository _currencyRepo;
         private readonly IUserService _userService;
+        private readonly IConversionHistoryRepository _historyRepo;
 
-        public CurrencyService(ICurrencyRepository currencyRepo, IUserService userService)
+        public CurrencyService(ICurrencyRepository currencyRepo, IUserService userService, IConversionHistoryRepository historyRepo)
         {
             _currencyRepo = currencyRepo;
             _userService = userService;
+            _historyRepo = historyRepo;
         }
 
         public List<Currency>? GetCurrency()
@@ -107,7 +109,7 @@ namespace Service
             }
         }
 
-        public decimal ConvertCurrency(CurrencyConversionDto dto)
+        public decimal ConvertCurrency(CurrencyConversionDto dto, int userId)
         {
             var from = _currencyRepo.GetByCode(dto.FromCurrencyCode)
                 ?? throw new ArgumentException("Moneda origen desconocida.");
@@ -117,8 +119,20 @@ namespace Service
             if (to.ConversionRate <= 0)
                 throw new ArgumentException("Índice de convertibilidad inválido para la moneda destino.");
 
-            if (from.Code == to.Code) return dto.Amount;
-            return dto.Amount * from.ConversionRate / to.ConversionRate;
+            var result = from.Code == to.Code ? dto.Amount : dto.Amount * from.ConversionRate / to.ConversionRate;
+
+            _historyRepo.Add(new ConversionHistory
+            {
+                UserId = userId,
+                FromCurrencyCode = dto.FromCurrencyCode,
+                ToCurrencyCode = dto.ToCurrencyCode,
+                Amount = dto.Amount,
+                Result = result,
+                Date = DateTime.UtcNow
+            });
+            _historyRepo.SaveChanges();
+
+            return result;
         }
     }
 }

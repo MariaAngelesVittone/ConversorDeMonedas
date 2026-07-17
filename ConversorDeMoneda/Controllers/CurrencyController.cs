@@ -1,4 +1,4 @@
-﻿using Data.Entities;
+using Data.Entities;
 using Dto;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -19,6 +19,18 @@ namespace BackConversorDeMonedasTP.Controllers
             _userService = userService;
         }
 
+        private int GetUserIdFromRequest()
+        {
+            var authHeader = HttpContext.Request.Headers["Authorization"].FirstOrDefault();
+            if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer "))
+            {
+                return 0;
+            }
+
+            var token = authHeader.Substring("Bearer ".Length);
+            return _currencyService.GetUserIdFromToken(token);
+        }
+
         [HttpGet]
         public IActionResult GetCurrency()
         {
@@ -34,6 +46,16 @@ namespace BackConversorDeMonedasTP.Controllers
         [HttpPost]
         public IActionResult CreateCurrency([FromBody] CreateCurrencyDto createCurrencyDto)
         {
+            var userId = GetUserIdFromRequest();
+            if (userId == 0)
+            {
+                return Unauthorized("Token no proporcionado o invalido.");
+            }
+            if (!_userService.IsAdmin(userId))
+            {
+                return Forbid();
+            }
+
             Currency? currency = _currencyService.CreateCurrency(createCurrencyDto);
             if (currency is null)
             {
@@ -45,6 +67,16 @@ namespace BackConversorDeMonedasTP.Controllers
         [HttpPut("{codeCurrency}")]
         public IActionResult ModificateCurrency([FromRoute] int codeCurrency, [FromBody] ModificateCurrencyDto modificateCurrencyDto)
         {
+            var userId = GetUserIdFromRequest();
+            if (userId == 0)
+            {
+                return Unauthorized("Token no proporcionado o invalido.");
+            }
+            if (!_userService.IsAdmin(userId))
+            {
+                return Forbid();
+            }
+
             Currency? currency = _currencyService.ModificateCurrency(codeCurrency, modificateCurrencyDto);
             if (currency is null)
             {
@@ -56,6 +88,16 @@ namespace BackConversorDeMonedasTP.Controllers
         [HttpDelete("{codeCurrency}")]
         public IActionResult DeleteCurrency([FromRoute] int codeCurrency)
         {
+            var userId = GetUserIdFromRequest();
+            if (userId == 0)
+            {
+                return Unauthorized("Token no proporcionado o invalido.");
+            }
+            if (!_userService.IsAdmin(userId))
+            {
+                return Forbid();
+            }
+
             Currency? currency = _currencyService.DeleteCurrency(codeCurrency);
             if (currency is null)
             {
@@ -70,15 +112,7 @@ namespace BackConversorDeMonedasTP.Controllers
         [HttpPost("conversion")]
         public IActionResult ConvertCurrency([FromBody] CurrencyConversionDto currencyConversionDto)
         {
-            var authHeader = HttpContext.Request.Headers["Authorization"].FirstOrDefault();
-            if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer "))
-            {
-                return Unauthorized("Token no proporcionado.");
-            }
-
-            var token = authHeader.Substring("Bearer ".Length);
-
-            var userId = _currencyService.GetUserIdFromToken(token);
+            var userId = GetUserIdFromRequest();
 
             if (userId == 0)
             {
@@ -92,14 +126,13 @@ namespace BackConversorDeMonedasTP.Controllers
             decimal conversioResult;
             try
             {
-                conversioResult = _currencyService.ConvertCurrency(currencyConversionDto);
+                conversioResult = _currencyService.ConvertCurrency(currencyConversionDto, userId);
             }
             catch (ArgumentException ex)
             {
                 return BadRequest(ex.Message);
             }
 
-            _userService.RegisterConversion(userId);
             return Ok(conversioResult);
         }
     }

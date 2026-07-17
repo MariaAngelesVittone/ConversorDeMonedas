@@ -11,6 +11,6 @@ namespace Service.Interface
         Currency? ModificateCurrency(int codeCurrency, ModificateCurrencyDto dto);
         Currency? DeleteCurrency(int codeCurrency);
         int GetUserIdFromToken(string token);
-        decimal ConvertCurrency(CurrencyConversionDto dto);
+        decimal ConvertCurrency(CurrencyConversionDto dto, int userId);
     }
 }
