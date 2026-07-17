@@ -39,7 +39,7 @@ namespace Service
             {
                 "ARS" => "$",
                 "EUR" => "€",
-                "CORONA CHECA" => "Kč",
+                "BRL" => "R$",
                 "USD" => "$",
                 _ => dto.Simbolo ?? string.Empty
             };
@@ -70,7 +70,7 @@ namespace Service
             {
                 "ARS" => "$",
                 "EUR" => "€",
-                "CORONA CHECA" => "Kč",
+                "BRL" => "R$",
                 "USD" => "$",
                 _ => currency.Symbol
             };

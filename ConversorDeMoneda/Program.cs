@@ -115,7 +115,7 @@ using (var scope = app.Services.CreateScope())
             new Currency { Code = 1, Leyend = "USD", Symbol = "$", ConversionRate = 1.00m, State = CurrencyState.Active },
             new Currency { Code = 2, Leyend = "ARS", Symbol = "$", ConversionRate = 0.000675m, State = CurrencyState.Active },
             new Currency { Code = 3, Leyend = "EUR", Symbol = "€", ConversionRate = 1.145m, State = CurrencyState.Active },
-            new Currency { Code = 4, Leyend = "REAL BRASILEÑO", Symbol = "R$", ConversionRate = 0.196m, State = CurrencyState.Active }
+            new Currency { Code = 4, Leyend = "BRL", Symbol = "R$", ConversionRate = 0.196m, State = CurrencyState.Active }
         );
         context.SaveChanges();
     }
