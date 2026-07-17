@@ -1,6 +1,7 @@
 ﻿using Data.Entities;
 using Data.Enums;
 using Data.Interface;
+using Dto;
 using Dto.Request;
 using Dto.Response;
 using Service.Interface;
@@ -79,6 +80,42 @@ namespace Service
         {
             var user = _userRepository.GetUserById(userId);
             return user?.IsAdmin ?? false;
+        }
+
+        public UserProfileDto? GetProfile(int userId)
+        {
+            var user = _userRepository.GetUserById(userId);
+            if (user is null) return null;
+
+            return new UserProfileDto
+            {
+                Id = user.Id,
+                Username = user.Username,
+                Email = user.Email,
+                SubscriptionType = user.SubscriptionType,
+                ConversionLimit = user.ConversionLimit,
+                IsAdmin = user.IsAdmin
+            };
+        }
+
+        public UserProfileDto? UpdateOwnSubscription(int userId, SubscriptionType newType)
+        {
+            var user = _userRepository.GetUserById(userId);
+            if (user is null) return null;
+
+            user.SubscriptionType = newType;
+            user.ConversionLimit = newType switch
+            {
+                SubscriptionType.Free => 10,
+                SubscriptionType.Trial => 100,
+                SubscriptionType.Pro => int.MaxValue,
+                _ => user.ConversionLimit
+            };
+
+            _userRepository.Update(user);
+            _userRepository.SaveChanges();
+
+            return GetProfile(userId);
         }
     }
 }

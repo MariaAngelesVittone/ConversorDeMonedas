@@ -1,6 +1,9 @@
-﻿using Dto.Request;
+using Data.Enums;
+using Dto.Request;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Service.Interface;
+using System.Security.Claims;
 
 namespace ConversorDeMoneda.Controllers
 {
@@ -28,6 +31,38 @@ namespace ConversorDeMoneda.Controllers
             {
                 return BadRequest(ex.Message);
             }
+        }
+
+        private int GetCurrentUserId()
+        {
+            var idClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            return int.TryParse(idClaim, out var userId) ? userId : 0;
+        }
+
+        [HttpGet("me")]
+        [Authorize]
+        public IActionResult GetMyProfile()
+        {
+            var userId = GetCurrentUserId();
+            if (userId == 0) return Unauthorized();
+
+            var profile = _userService.GetProfile(userId);
+            if (profile is null) return NotFound();
+
+            return Ok(profile);
+        }
+
+        [HttpPut("subscription")]
+        [Authorize]
+        public IActionResult UpdateMySubscription([FromBody] SubscriptionType newType)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == 0) return Unauthorized();
+
+            var profile = _userService.UpdateOwnSubscription(userId, newType);
+            if (profile is null) return NotFound();
+
+            return Ok(profile);
         }
     }
 }
